@@ -10,5 +10,15 @@ categorical_cols = ['gender', 'family_history_with_overweight', 'favc', 'caec', 
 for col in categorical_cols:
     df[col] = df[col].astype('category')
 
+def simplify_transport(x):
+    if x in ['Walking', 'Bike']:
+        return 'Active'
+    else:
+        return 'Passive'
+
+df['transport_type'] = df['mtrans'].apply(simplify_transport)
+df['transport_type'] = df['transport_type'].astype('category')
+
+
 df.to_csv("data/obesity_cleaned.csv", index=False)
 print("###################### CLEANED DAT ######################")
