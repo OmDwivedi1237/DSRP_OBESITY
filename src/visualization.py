@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 from textwrap import fill
+import joblib
 
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -19,26 +20,28 @@ def save_fig(name: str):
     plt.close()
 
 # plot obesity class distribution
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 8))
 if 'nobeyesdad' in df.columns:
     order = df.groupby(['target','nobeyesdad']).size().reset_index().sort_values('target')['nobeyesdad']
-    sns.countplot(data=df, x='nobeyesdad', order=order.unique(), palette='viridis')
-    plt.xlabel("Obesity Class")
-    plt.title("Distribution of Obesity Classes")
+    sns.countplot(data=df, x='nobeyesdad', order=order.unique(), hue='nobeyesdad', palette='viridis', legend=False)
+    plt.xlabel("Obesity Class", fontsize=14)
+    plt.title("Distribution of Obesity Classes", fontsize=16, pad=20)
+    plt.xticks(rotation=45, ha='right', fontsize=12)
 else:
-    sns.countplot(data=df, x='target', palette='viridis')
-    plt.xlabel("Obesity Class (Encoded)")
-    plt.title("Distribution of Obesity Classes (Encoded)")
-plt.ylabel("Count")
+    sns.countplot(data=df, x='target', hue='target', palette='viridis', legend=False)
+    plt.xlabel("Obesity Class (Encoded)", fontsize=14)
+    plt.title("Distribution of Obesity Classes (Encoded)", fontsize=16, pad=20)
+plt.ylabel("Count", fontsize=14)
 save_fig("obesity_class_distribution.png")
 
 # plot screen time vs obesity class
-plt.figure(figsize=(11, 6))
-sns.boxplot(data=df, x='target', y='tue', showfliers=False, palette='Set2')
+plt.figure(figsize=(13, 7))
+sns.boxplot(data=df, x='target', y='tue', showfliers=False, hue='target', palette='Set2', legend=False)
 sns.stripplot(data=df, x='target', y='tue', color='k', alpha=0.25, size=2)
-plt.title("Daily Screen Time (TUE) by Obesity Class")
-plt.xlabel("Obesity Class (Encoded)")
-plt.ylabel("Screen Time (hours)")
+plt.title("Daily Screen Time (TUE) by Obesity Class", fontsize=16, pad=20)
+plt.xlabel("Obesity Class (Encoded)", fontsize=14)
+plt.ylabel("Screen Time (hours)", fontsize=14)
+plt.tick_params(axis='both', labelsize=12)
 save_fig("tue_vs_obesity.png")
 
 # plot unhealthy cluster by transport
@@ -48,21 +51,25 @@ if {'unhealthy_cluster','active_transport'}.issubset(df.columns):
     total = ct.groupby('active_transport')['count'].transform('sum')
     ct['pct'] = ct['count']/total
     pivot = ct.pivot(index='active_transport', columns='unhealthy_cluster', values='pct').fillna(0)
-    pivot.plot(kind='bar', stacked=True, figsize=(9,6), colormap='coolwarm')
-    plt.legend(title='Unhealthy Cluster', labels=["No","Yes"], loc='upper right')
-    plt.xlabel('Active Transport (0=Passive,1=Active)')
-    plt.ylabel('Proportion')
-    plt.title('Proportion of Unhealthy Cluster by Transport Type')
+    plt.figure(figsize=(10, 7))
+    pivot.plot(kind='bar', stacked=True, colormap='coolwarm')
+    plt.legend(title='Unhealthy Cluster', labels=["No","Yes"], loc='upper right', fontsize=12)
+    plt.xlabel('Active Transport (0=Passive,1=Active)', fontsize=14)
+    plt.ylabel('Proportion', fontsize=14)
+    plt.title('Proportion of Unhealthy Cluster by Transport Type', fontsize=16, pad=20)
+    plt.xticks(rotation=0, fontsize=12)
+    plt.tick_params(axis='y', labelsize=12)
     save_fig("cluster_by_transport_stacked.png")
 
 # plot interaction feature
 if 'low_veg_high_screen' in df.columns:
-    plt.figure(figsize=(10,6))
+    plt.figure(figsize=(12,7))
     sns.countplot(data=df, x='target', hue='low_veg_high_screen', palette='magma')
-    plt.xlabel('Obesity Class (Encoded)')
-    plt.ylabel('Count')
-    plt.legend(title='Low Veg & High Screen', labels=['No','Yes'])
-    plt.title('Interaction: Low Vegetable Intake & High Screen Time by Class')
+    plt.xlabel('Obesity Class (Encoded)', fontsize=14)
+    plt.ylabel('Count', fontsize=14)
+    plt.legend(title='Low Veg & High Screen', labels=['No','Yes'], loc='upper right', fontsize=12)
+    plt.title('Interaction: Low Vegetable Intake & High Screen Time by Class', fontsize=16, pad=20)
+    plt.tick_params(axis='both', labelsize=12)
     save_fig("interaction_lowveg_highscreen_vs_class.png")
 
 # plot correlation heatmap
@@ -74,25 +81,35 @@ if 'target' in corr.columns:
                    .abs().sort_values(ascending=False))
     top_feats = target_corr.head(15).index.tolist() + ['target']
     cm = corr.loc[top_feats, top_feats]
-    plt.figure(figsize=(12,9))
-    sns.heatmap(cm, annot=True, fmt='.2f', cmap='coolwarm', square=True, cbar_kws={'shrink':0.6})
-    plt.title('Correlation Matrix (Top 15 Features by |corr with target|)')
+    plt.figure(figsize=(14,10))
+    sns.heatmap(cm, annot=True, fmt='.2f', cmap='coolwarm', square=True, 
+                cbar_kws={'shrink':0.6}, annot_kws={'size': 8})
+    plt.title('Correlation Matrix (Top 15 Features by |corr with target|)', fontsize=16, pad=20)
+    plt.xticks(rotation=45, ha='right', fontsize=10)
+    plt.yticks(rotation=0, fontsize=10)
     save_fig("top_feature_correlations.png")
 
 # plot distributions for behavioral features
 selected_features = [c for c in ['tue','faf','fcvc','ch2o'] if c in df.columns]
 if selected_features:
     n = len(selected_features)
-    fig, axes = plt.subplots(1, n, figsize=(4*n, 4), sharey=False)
+    fig, axes = plt.subplots(1, n, figsize=(5*n, 6), sharey=False)
     if n == 1:
         axes = [axes]
     for ax, col in zip(axes, selected_features):
-        sns.kdeplot(data=df, x=col, hue='target', common_norm=False, fill=True, alpha=0.4, ax=ax, legend=False)
-        ax.set_title(fill(f"Distribution of {col} by class", 20))
+        if df[col].nunique() > 1:
+            sns.kdeplot(data=df, x=col, hue='target', common_norm=False, fill=True, 
+                       alpha=0.4, ax=ax, legend=False, warn_singular=False)
+            ax.set_title(f"Distribution of {col} by class", fontsize=12)
+        else:
+            ax.set_title(f"{col} has no variance", fontsize=12)
+        ax.set_xlabel(col, fontsize=11)
+        ax.set_ylabel("Density", fontsize=11)
+        ax.tick_params(axis='both', labelsize=10)
     handles, labels = axes[0].get_legend_handles_labels()
     if handles:
-        fig.legend(handles, labels, title='Target', loc='upper right')
-    fig.suptitle('Behavioral Feature Distributions', y=1.02, fontsize=16)
+        fig.legend(handles, labels, title='Target', loc='upper right', fontsize=11)
+    fig.suptitle('Behavioral Feature Distributions', y=0.98, fontsize=16)
     fig.tight_layout()
     save_fig("behavioral_feature_distributions.png")
 
@@ -104,8 +121,12 @@ if 'bmi' not in df.columns and {'weight','height'}.issubset(df.columns):
         subset_cols.insert(0,'bmi')
 if len(subset_cols) >= 3:
     sample_df = df[subset_cols].sample(min(400, len(df)), random_state=42)
-    g = sns.pairplot(sample_df, vars=[c for c in subset_cols if c != 'target'], hue='target', diag_kind='kde', corner=True, plot_kws={'alpha':0.5, 's':25, 'edgecolor':'none'})
-    g.fig.suptitle('Pairwise Relationships (Sampled)', y=1.02)
+    g = sns.pairplot(sample_df, vars=[c for c in subset_cols if c != 'target'], 
+                     hue='target', diag_kind='kde', corner=True, 
+                     plot_kws={'alpha':0.5, 's':15, 'edgecolor':'none'},
+                     height=2.5)
+    g.fig.suptitle('Pairwise Relationships (Sampled)', y=1.02, fontsize=16)
+    g.fig.tight_layout()
     g.fig.savefig(os.path.join(FINAL_DIR, 'pairplot_sampled.png'), dpi=300, bbox_inches='tight')
     plt.close(g.fig)
 
@@ -125,11 +146,12 @@ if os.path.exists(rf_model_path):
             if len(importances) == len(feat_names):
                 imp_df = pd.DataFrame({'feature': feat_names, 'importance': importances})
                 imp_df = imp_df.sort_values('importance', ascending=False).head(20)
-                plt.figure(figsize=(10,7))
+                plt.figure(figsize=(12,8))
                 sns.barplot(data=imp_df, x='importance', y='feature', palette='crest')
-                plt.title('Random Forest Top 20 Feature Importances')
-                plt.xlabel('Importance')
-                plt.ylabel('Feature')
+                plt.title('Random Forest Top 20 Feature Importances', fontsize=16, pad=20)
+                plt.xlabel('Importance', fontsize=14)
+                plt.ylabel('Feature', fontsize=14)
+                plt.tick_params(axis='both', labelsize=12)
                 save_fig('random_forest_feature_importance_top20.png')
     except Exception:
         pass
