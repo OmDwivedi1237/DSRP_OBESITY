@@ -5,7 +5,7 @@ from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
 df = pd.read_csv("data/obesity_features.csv")
 
-# Chi-square
+# chi-square test
 contingency = pd.crosstab([df['low_veg_high_screen'], df['active_transport']], df['target'])
 chi2, p, dof, expected = chi2_contingency(contingency)
 
@@ -16,10 +16,9 @@ print(f"degrees of freedom: {dof}")
 print("reject null hypothesis:" if p < 0.05 else "fail to reject null hypothesis")
 print()
 
-# ANOVA groups
+# group data for anova
 grouped = [df[df['target'] == i]['tue'] for i in sorted(df['target'].unique())]
 
-# ANOVA assumptions
 print("###################### ANOVA ASSUMPTIONS ######################")
 for i, group in enumerate(grouped):
     stat, pval = shapiro(group)
@@ -29,7 +28,6 @@ levene_stat, levene_p = levene(*grouped)
 print(f"Levene's test p-value: {levene_p:.4f}")
 print()
 
-# ANOVA
 anova_stat, anova_p = f_oneway(*grouped)
 print("###################### ANOVA (TUE by OBESITY CLASS) ######################")
 print(f"f-statistic: {anova_stat:.4f}")
@@ -37,7 +35,7 @@ print(f"p-value: {anova_p:.6f}")
 print("reject null hypothesis:" if anova_p < 0.05 else "fail to reject null hypothesis")
 print()
 
-# Tukey post-hoc if needed
+# post-hoc test ONLY IF NEEDED
 if anova_p < 0.05:
     print("###################### POST-HOC: TUKEY'S HSD ######################")
     tukey = pairwise_tukeyhsd(df['tue'], df['target'])

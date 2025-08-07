@@ -5,10 +5,9 @@ import os
 
 df = pd.read_csv("data/obesity_cleaned.csv")
 
-# Make output folder
 os.makedirs("output/plots", exist_ok=True)
 
-# Obesity class counts
+# plot obesity class distribution
 plt.figure(figsize=(10, 5))
 sns.countplot(data=df, x='nobeyesdad', order=sorted(df['nobeyesdad'].unique()))
 plt.xticks(rotation=45)
@@ -17,7 +16,7 @@ plt.tight_layout()
 plt.savefig("output/plots/obesity_class_distribution.png")
 plt.close()
 
-# Veggie consumption by class
+# plot veggie consumption
 plt.figure(figsize=(10, 5))
 sns.boxplot(data=df, x='nobeyesdad', y='fcvc')
 plt.xticks(rotation=45)
@@ -26,7 +25,7 @@ plt.tight_layout()
 plt.savefig("output/plots/fcvc_vs_obesity.png")
 plt.close()
 
-# Screen time by class
+# plot screen time
 plt.figure(figsize=(10, 5))
 sns.boxplot(data=df, x='nobeyesdad', y='tue')
 plt.xticks(rotation=45)
@@ -35,7 +34,7 @@ plt.tight_layout()
 plt.savefig("output/plots/tue_vs_obesity.png")
 plt.close()
 
-# Transport method by class
+# plot transport method
 plt.figure(figsize=(12, 6))
 sns.countplot(data=df, x='mtrans', hue='nobeyesdad')
 plt.xticks(rotation=45)
@@ -44,7 +43,7 @@ plt.tight_layout()
 plt.savefig("output/plots/transport_vs_obesity.png")
 plt.close()
 
-# Numeric correlation heatmap
+# plot correlation heatmap
 numeric_df = df.select_dtypes(include=['float64', 'int64'])
 plt.figure(figsize=(10, 8))
 sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt=".2f")
@@ -53,4 +52,5 @@ plt.tight_layout()
 plt.savefig("output/plots/correlation_heatmap.png")
 plt.close()
 
+# done
 print("###################### EXPLORATORY ANALYSIS COMPLETE ######################")
